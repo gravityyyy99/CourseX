@@ -1,0 +1,11 @@
+{
+  "id": "usr-admin-primary",
+  "name": "CourseX Administrator",
+  "title": "Lead Instructor & Platform Architect",
+  "email": "admin@coursex.com",
+  "password": "admin",
+  "twoFactorSecret": "882104",
+  "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+  "bio": "Passionate educator and systems architect. CourseX was founded to eliminate disorganized video folders and deliver structured, distraction-free learning directly to ambitious students worldwide.",
+  "aboutPlatform": "CourseX is an independent curriculum platform designed to convert raw cloud folders and video repositories into structured, section-by-section masterclasses with synchronized in-app video streaming and embedded document reading."
+}
