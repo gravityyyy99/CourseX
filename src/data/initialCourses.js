@@ -61,17 +61,37 @@ export const INITIAL_COURSES = [
         ],
         "notes": [
           {
-            "id": "note-2",
+            "id": "note-1792214615282-0-695chu",
+            "title": "02. The Evolution of Al.pdf",
+            "fileUrl": "https://drive.google.com/file/d/1v2rWg0-eS3n-aYCeqGMZ9DUTU9UtTqCd/preview"
+          },
+          {
+            "id": "note-1792214615226-1-e40kr8",
             "title": "03. Does chatgpt know or Does it Guess.pdf",
             "fileUrl": "https://drive.google.com/file/d/1M_QXBOvmBeeb3w6YY7NabbZso_h92bvG/preview"
           },
           {
-            "id": "note-3",
+            "id": "note-1792214615620-2-vl2jvl",
             "title": "04. The Secret Language of LLMs.pdf",
             "fileUrl": "https://drive.google.com/file/d/1xDKNdyShlk5L8eDhF_SP2x6Shd06PFD4/preview"
           },
           {
-            "id": "note-4",
+            "id": "note-1792214615296-3-5ndmo2",
+            "title": "05. How Machines Represent Meaning.pdf",
+            "fileUrl": "https://drive.google.com/file/d/1mocDHIXGDODqy4RKlsIviWlo23AdDe-l/preview"
+          },
+          {
+            "id": "note-1792214615517-4-190jml",
+            "title": "06. The Computational Brain of a machine.pdf",
+            "fileUrl": "https://drive.google.com/file/d/1Bs0KRT_LDciB8Xj7nf9thBtQPdm-CVjf/preview"
+          },
+          {
+            "id": "note-1792214615540-5-0q5v9t",
+            "title": "07. Sharpening the Brain.pdf",
+            "fileUrl": "https://drive.google.com/file/d/1lesTO5TTagympnZGHwvm-518h5n4THLK/preview"
+          },
+          {
+            "id": "note-1792214615795-6-yj8tsu",
             "title": "08. From Base Model to an AI Assistant.pdf",
             "fileUrl": "https://drive.google.com/file/d/1PZbu5c38Csx4mFYmrxm0V_achBmfXDnp/preview"
           }
@@ -109,6 +129,66 @@ export const INITIAL_COURSES = [
             "id": "vid-1792187483466-4-qx4l4",
             "title": "Episode-05 System Implementation & Testing.mp4",
             "videoUrl": "https://drive.google.com/file/d/1a4SN520yGJrMn4jrO-Im9emszJyqgfZb/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217194711-0-30t8qu",
+            "title": "Episode-06  UI & UX Design using AI.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1ArlvauZcFPMjiF88Nc0LHlIq1pqqDpzc/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217194650-1-fbmek5",
+            "title": "Episode-07 Building the Scaffold using AI.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1D42UEjAmYSOITQdYbbXXqONGXeXuic1p/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217194658-2-1ogrnb",
+            "title": "Episode-08 Bringing Design to life.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1dio5cuWg_6B4XX1Rg6FZx-EeeG-_py-O/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217194628-3-1l4k50",
+            "title": "Episode-09 Auth setup and onboarding flow.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1m1wKdp08BwZZQRaa_id4vQ6WQ14YaEEd/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217194626-4-5ewnb2",
+            "title": "Episode-10 Email sending flow and role based access.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1XItGbo07imzwLwkJ4MDr_YPGTqEI1FdF/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217194669-5-t1d5hk",
+            "title": "Episode-12 setting up a custom domain.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1Lrg9j1NnGckeZMDUbH7wm_5TFUSfCnVO/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217195153-6-i1kk7z",
+            "title": "Episode-13 Building user dashboard and managing events.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1ZISF6KaZxH64AVhH-cZr8Le0dFHlP2la/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217195160-7-yep6wn",
+            "title": "Episode-11 Deploying app to production.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1phnqK3mBR36MzaloJJ9WtOu0PuVQV8h-/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217195170-8-u1l0ki",
+            "title": "Episode-14 Building task management, Invites and RSVP.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1PzfSApS4zR3k0W7JvagALMa778K69-MO/preview",
+            "completed": false
+          },
+          {
+            "id": "vid-1792217195183-9-q8p3x9",
+            "title": "Episode-15 Building image upload and gallery using AI.mp4",
+            "videoUrl": "https://drive.google.com/file/d/1gkX3Ll9Un1ru8uVBsGdQOVjDWQyq9Ko0/preview",
             "completed": false
           }
         ],

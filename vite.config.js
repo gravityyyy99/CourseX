@@ -8,6 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = path.resolve(__dirname, 'data')
 const COURSES_FILE = path.join(DATA_DIR, 'courses.json')
 const PROFILE_FILE = path.join(DATA_DIR, 'admin-profile.json')
+const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json')
+const USERS_FILE = path.join(DATA_DIR, 'users.json')
 
 // Custom Vite plugin to handle shared server API
 function coursexApiPlugin() {
@@ -50,7 +52,39 @@ function coursexApiPlugin() {
           return
         }
 
-        // 3. GET /api/admin-profile
+        // 3. GET /api/customers
+        if (parsedUrl.pathname === '/api/customers' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          try {
+            if (fs.existsSync(CUSTOMERS_FILE)) {
+              const data = fs.readFileSync(CUSTOMERS_FILE, 'utf-8')
+              return res.end(data)
+            }
+          } catch (e) {
+            console.error(e)
+          }
+          return res.end('[]')
+        }
+
+        // 4. POST /api/customers
+        if (parsedUrl.pathname === '/api/customers' && req.method === 'POST') {
+          let body = ''
+          req.on('data', chunk => { body += chunk })
+          req.on('end', () => {
+            try {
+              if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+              fs.writeFileSync(CUSTOMERS_FILE, body, 'utf-8')
+              res.setHeader('Content-Type', 'application/json')
+              return res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              return res.end(JSON.stringify({ error: err.message }))
+            }
+          })
+          return
+        }
+
+        // 5. GET /api/admin-profile
         if (parsedUrl.pathname === '/api/admin-profile' && req.method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           try {
@@ -64,7 +98,7 @@ function coursexApiPlugin() {
           return res.end('{}')
         }
 
-        // 4. POST /api/admin-profile
+        // 6. POST /api/admin-profile
         if (parsedUrl.pathname === '/api/admin-profile' && req.method === 'POST') {
           let body = ''
           req.on('data', chunk => { body += chunk })
@@ -82,7 +116,126 @@ function coursexApiPlugin() {
           return
         }
 
-        // 5. GET /api/fetch-drive-meta?url=...
+        // 7. GET /api/users
+        if (parsedUrl.pathname === '/api/users' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          try {
+            if (fs.existsSync(USERS_FILE)) {
+              const data = fs.readFileSync(USERS_FILE, 'utf-8')
+              return res.end(data)
+            }
+          } catch (e) {
+            console.error(e)
+          }
+          return res.end('[]')
+        }
+
+        // 8. POST /api/users
+        if (parsedUrl.pathname === '/api/users' && req.method === 'POST') {
+          let body = ''
+          req.on('data', chunk => { body += chunk })
+          req.on('end', () => {
+            try {
+              if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+              fs.writeFileSync(USERS_FILE, body, 'utf-8')
+              res.setHeader('Content-Type', 'application/json')
+              return res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              return res.end(JSON.stringify({ error: err.message }))
+            }
+          })
+          return
+        }
+
+        // Helper function to resolve TeraBox streams
+        async function resolveTeraBoxStream(url, password = '') {
+          try {
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 15000)
+            const response = await fetch('https://teraplayer-backend-temp.onrender.com/api/preview', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Origin': 'https://teraplayer.in',
+                'Referer': 'https://teraplayer.in/'
+              },
+              body: JSON.stringify({ url, password: password || '' }),
+              signal: controller.signal
+            })
+            clearTimeout(timer)
+            const data = await response.json()
+            return data
+          } catch (err) {
+            console.error('TeraBox preview error:', err)
+            return { ok: false, error: err.message }
+          }
+        }
+
+        // 5. GET /api/resolve-terabox?url=...
+        if (parsedUrl.pathname === '/api/resolve-terabox' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('Access-Control-Allow-Origin', '*')
+          const targetUrl = parsedUrl.searchParams.get('url')
+          const pwd = parsedUrl.searchParams.get('pwd') || ''
+          if (!targetUrl) {
+            return res.end(JSON.stringify({ ok: false, error: 'URL required' }))
+          }
+
+          const data = await resolveTeraBoxStream(targetUrl, pwd)
+          if (data && data.ok && data.stream_url) {
+            const proxiedStreamUrl = `/api/terabox-m3u8?url=${encodeURIComponent(data.stream_url)}`
+            return res.end(JSON.stringify({
+              ok: true,
+              title: data.title || 'TeraBox Video',
+              duration: data.duration,
+              sizeStr: data.size_str,
+              thumbnail: data.thumbnail,
+              streamUrl: proxiedStreamUrl,
+              rawStreamUrl: data.stream_url,
+              rawUrl: targetUrl,
+              files: data.files
+            }))
+          }
+
+          return res.end(JSON.stringify({
+            ok: false,
+            error: data?.error || 'Could not resolve TeraBox stream'
+          }))
+        }
+
+        // 6. GET /api/terabox-m3u8?url=...
+        if (parsedUrl.pathname === '/api/terabox-m3u8' && req.method === 'GET') {
+          const rawStreamUrl = parsedUrl.searchParams.get('url')
+          if (!rawStreamUrl) {
+            res.statusCode = 400
+            return res.end('URL required')
+          }
+
+          try {
+            const proxyUrl = `https://teraplayer-backend-temp.onrender.com/api/stream?url=${encodeURIComponent(rawStreamUrl)}`
+            const m3u8Res = await fetch(proxyUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Origin': 'https://teraplayer.in',
+                'Referer': 'https://teraplayer.in/'
+              }
+            })
+
+            res.setHeader('Content-Type', 'application/vnd.apple.mpegurl')
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Cache-Control', 'no-cache')
+            const m3u8Text = await m3u8Res.text()
+            return res.end(m3u8Text)
+          } catch (mErr) {
+            console.error('m3u8 proxy error:', mErr)
+            res.statusCode = 500
+            return res.end('Failed to fetch stream playlist')
+          }
+        }
+
+        // 7. GET /api/fetch-drive-meta?url=...
         if (parsedUrl.pathname === '/api/fetch-drive-meta' && req.method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           const targetUrl = parsedUrl.searchParams.get('url')
@@ -91,7 +244,24 @@ function coursexApiPlugin() {
           }
 
           try {
-            // Check YouTube link first
+            // Check TeraBox link first
+            if (/(?:terabox|1024tera|terafileshare|terasharelink|terasharefile|nephobox|mirrobox|4funbox)/i.test(targetUrl)) {
+              const teraData = await resolveTeraBoxStream(targetUrl)
+              if (teraData && teraData.ok) {
+                return res.end(JSON.stringify({
+                  title: teraData.title || 'TeraBox Video',
+                  embedUrl: targetUrl,
+                  streamUrl: `/api/terabox-m3u8?url=${encodeURIComponent(teraData.stream_url)}`,
+                  isTeraBox: true,
+                  duration: teraData.duration,
+                  sizeStr: teraData.size_str,
+                  thumbnail: teraData.thumbnail,
+                  files: teraData.files
+                }))
+              }
+            }
+
+            // Check YouTube link
             const ytMatch = targetUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
             if (ytMatch && ytMatch[1]) {
               return res.end(JSON.stringify({

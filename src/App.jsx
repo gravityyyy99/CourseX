@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CourseProvider, useCourse } from './context/CourseContext';
+import { EnrollmentProvider } from './context/EnrollmentContext';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CourseCatalog } from './components/CourseCatalog';
@@ -82,6 +83,7 @@ function MainLayout() {
           <CourseCatalog 
             onSelectCourse={handleSelectCourse}
             onNavigateAdmin={handleNavigateAdmin}
+            onOpenAuth={handleOpenAuth}
           />
         )}
 
@@ -97,6 +99,7 @@ function MainLayout() {
         {currentView === 'viewer' && (
           <CourseViewer 
             onBackToCourses={() => setCurrentView('courses')}
+            onOpenAuth={handleOpenAuth}
           />
         )}
 
@@ -169,7 +172,9 @@ export default function App() {
   return (
     <AuthProvider>
       <CourseProvider>
-        <MainLayout />
+        <EnrollmentProvider>
+          <MainLayout />
+        </EnrollmentProvider>
       </CourseProvider>
     </AuthProvider>
   );

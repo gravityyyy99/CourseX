@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCourse } from '../context/CourseContext';
 import { useAuth } from '../context/AuthContext';
+import { useEnrollment } from '../context/EnrollmentContext';
 import { 
   Play, 
   Layers, 
@@ -8,18 +9,36 @@ import {
   Search, 
   ArrowRight,
   Settings,
-  Plus
+  Plus,
+  Lock,
+  Sparkles,
+  CheckCircle2,
+  KeyRound
 } from 'lucide-react';
 
-export function CourseCatalog({ onSelectCourse, onNavigateAdmin }) {
+export function CourseCatalog({ onSelectCourse, onNavigateAdmin, onOpenAuth }) {
   const { courses, setActiveCourseId } = useCourse();
-  const { isAdmin } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
+  const { isCourseUnlocked } = useEnrollment();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // If user signed in via Unique ID, default to showing their enrolled courses
+  const [courseFilter, setCourseFilter] = useState(() => {
+    return currentUser?.loginMethod === 'unique_id' ? 'enrolled' : 'all';
+  });
+
+  const enrolledCount = courses.filter(c => isCourseUnlocked(c.id)).length;
 
   const filteredCourses = courses.filter(course => {
-    return course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           course.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (courseFilter === 'enrolled') {
+      return matchesSearch && isCourseUnlocked(course.id);
+    }
+    return matchesSearch;
   });
 
   const handleOpenCourse = (courseId) => {
@@ -32,20 +51,62 @@ export function CourseCatalog({ onSelectCourse, onNavigateAdmin }) {
       {/* Top Header */}
       <div className="catalog-header-bar glass-panel">
         <div>
-          <h1 className="catalog-page-title">Courses</h1>
+          <h1 className="catalog-page-title">Course Curriculum</h1>
           <p className="catalog-page-desc">
-            Select any course to view its curriculum, sections, and video lectures.
+            {courseFilter === 'enrolled' 
+              ? `Displaying your ${enrolledCount} enrolled & unlocked course(s).` 
+              : 'Select any course to view its curriculum, sections, and video lectures.'}
           </p>
+
+          {/* Filter Pills: All vs My Enrolled Courses */}
+          {currentUser && (
+            <div className="catalog-filter-tabs" style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button 
+                type="button"
+                className={`btn-subtab ${courseFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setCourseFilter('all')}
+                style={{ padding: '6px 14px', fontSize: '0.84rem' }}
+              >
+                <span>All Courses ({courses.length})</span>
+              </button>
+              <button 
+                type="button"
+                className={`btn-subtab ${courseFilter === 'enrolled' ? 'active' : ''}`}
+                onClick={() => setCourseFilter('enrolled')}
+                style={{ padding: '6px 14px', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Sparkles size={13} className="text-cyan" />
+                <span>My Enrolled Courses</span>
+                <span className="badge badge-green" style={{ padding: '1px 7px', fontSize: '0.72rem' }}>
+                  {enrolledCount}
+                </span>
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="catalog-search-box">
-          <Search size={18} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search courses..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="catalog-actions-col" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+          <div className="catalog-search-box">
+            <Search size={18} className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search courses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {!currentUser && onOpenAuth && (
+            <button 
+              type="button"
+              className="btn-link-action"
+              onClick={() => onOpenAuth('unique_id')}
+              style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              <KeyRound size={13} className="text-cyan" />
+              <span>Have a Unique ID? Sign In with Code</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -53,6 +114,7 @@ export function CourseCatalog({ onSelectCourse, onNavigateAdmin }) {
       <div className="courses-grid">
         {filteredCourses.map((course) => {
           const totalVideos = (course.sections || []).reduce((acc, s) => acc + (s.videos?.length || 0), 0);
+          const isUnlocked = isCourseUnlocked(course.id);
 
           return (
             <div 
@@ -66,6 +128,13 @@ export function CourseCatalog({ onSelectCourse, onNavigateAdmin }) {
                 <div className="card-seasons-badge">
                   <Layers size={13} className="text-cyan" />
                   <span>{course.sections?.length || 0} Sections</span>
+                </div>
+                <div className="card-lock-status-badge">
+                  {isUnlocked ? (
+                    <span className="badge badge-green-glow">Enrolled</span>
+                  ) : (
+                    <span className="badge badge-cyan-glow">Available to Buy</span>
+                  )}
                 </div>
               </div>
 
@@ -95,7 +164,7 @@ export function CourseCatalog({ onSelectCourse, onNavigateAdmin }) {
                       </button>
                     )}
                     <button className="btn-open-course">
-                      <span>Open Course</span>
+                      <span>{isUnlocked ? 'Continue Learning' : 'Preview & Enroll'}</span>
                       <ArrowRight size={14} />
                     </button>
                   </div>

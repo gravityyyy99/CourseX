@@ -73,8 +73,19 @@ export function formatDriveEmbedUrl(url) {
 export const formatDriveVideoUrl = formatDriveEmbedUrl;
 export const formatVideoEmbedUrl = formatDriveEmbedUrl;
 
+export function isTeraBoxUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  return /(?:terabox|1024tera|terafileshare|terasharelink|terasharefile|teraboxshare|teraboxlink|nephobox|mirrobox|4funbox)/i.test(url);
+}
+
+export function isHlsUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  return url.includes('.m3u8') || url.includes('/api/terabox-m3u8') || url.includes('/stream?url=');
+}
+
 export function isEmbeddableVideo(url) {
   if (!url || typeof url !== 'string') return false;
+  if (isTeraBoxUrl(url) || isHlsUrl(url)) return false;
   return url.includes('drive.google.com') ||
          url.includes('docs.google.com') ||
          url.includes('youtube.com') ||

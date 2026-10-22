@@ -4,6 +4,7 @@ const AuthContext = createContext();
 
 const ADMIN_PROFILE_KEY = 'coursex_admin_profile_vault';
 const CURRENT_USER_KEY = 'coursex_current_user_vault';
+const CUSTOM_USERS_KEY = 'coursex_custom_users';
 
 export const DEFAULT_ADMIN_PROFILE = {
   id: "usr-admin-primary",
@@ -36,7 +37,77 @@ export function AuthProvider({ children }) {
     }
   });
 
+  const [allUsers, setAllUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CUSTOM_USERS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [pending2FA, setPending2FA] = useState(null);
+
+  // Sync users to/from server
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setAllUsers(prev => {
+              const merged = [...data];
+              prev.forEach(u => {
+                if (!merged.some(m => m.email.toLowerCase() === u.email.toLowerCase())) {
+                  merged.push(u);
+                }
+              });
+              try {
+                localStorage.setItem(CUSTOM_USERS_KEY, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
+        }
+      } catch {}
+    };
+    fetchUsers();
+  }, []);
+
+  const persistUsers = (usersList) => {
+    setAllUsers(usersList);
+    try {
+      localStorage.setItem(CUSTOM_USERS_KEY, JSON.stringify(usersList));
+    } catch {}
+    fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(usersList)
+    }).catch(() => {});
+  };
+
+  const getUserPassword = (emailOrPhone) => {
+    if (!emailOrPhone) return '';
+    const clean = emailOrPhone.trim().toLowerCase();
+    if (clean === adminProfile.email.toLowerCase()) return adminProfile.password;
+    const found = allUsers.find(u => 
+      (u.email && u.email.toLowerCase() === clean) ||
+      (u.phone && u.phone.replace(/\D/g, '') === clean.replace(/\D/g, ''))
+    );
+    return found?.password || '';
+  };
+
+  const loginDirectly = (userObj) => {
+    const authUser = {
+      ...userObj,
+      is2FAVerified: true,
+      lastLogin: new Date().toISOString()
+    };
+    setCurrentUser(authUser);
+    setPending2FA(null);
+    return authUser;
+  };
 
   useEffect(() => {
     try {
@@ -93,9 +164,12 @@ export function AuthProvider({ children }) {
       customUsers = JSON.parse(localStorage.getItem('coursex_custom_users') || '[]');
     } catch {}
 
-    const matched = customUsers.find(u => u.email.toLowerCase() === trimmedEmail);
+    const matched = customUsers.find(u => 
+      u.email.toLowerCase() === trimmedEmail || 
+      (u.phone && u.phone.replace(/\D/g, '') === trimmedEmail.replace(/\D/g, ''))
+    );
     if (!matched) {
-      throw new Error("No account found with this ID. Register a new student account or sign in with admin credentials.");
+      throw new Error("No account found with this Email or Phone. Register a new student account or sign in with admin credentials.");
     }
 
     if (matched.password !== password) {
@@ -112,6 +186,7 @@ export function AuthProvider({ children }) {
       status: "2fa_required",
       expectedOTP: matched.twoFactorSecret || "482910",
       email: matched.email,
+      phone: matched.phone,
       role: matched.role
     };
   };
@@ -141,8 +216,9 @@ export function AuthProvider({ children }) {
     setPending2FA(null);
   };
 
-  const register = ({ name, email, password }) => {
+  const register = ({ name, email, phone, password }) => {
     const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPhone = (phone || '').trim();
     let customUsers = [];
     try {
       customUsers = JSON.parse(localStorage.getItem('coursex_custom_users') || '[]');
@@ -156,14 +232,15 @@ export function AuthProvider({ children }) {
       id: `usr-${Date.now()}`,
       name: name.trim(),
       email: trimmedEmail,
+      phone: trimmedPhone,
       role: "user",
       password,
       twoFactorSecret: Math.floor(100000 + Math.random() * 900000).toString(),
       avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
     };
 
-    customUsers.push(newUser);
-    localStorage.setItem('coursex_custom_users', JSON.stringify(customUsers));
+    const updatedUsers = [...allUsers, newUser];
+    persistUsers(updatedUsers);
 
     setPending2FA({
       userCandidate: newUser,
@@ -175,6 +252,7 @@ export function AuthProvider({ children }) {
       status: "2fa_required",
       expectedOTP: newUser.twoFactorSecret,
       email: newUser.email,
+      phone: newUser.phone,
       role: newUser.role
     };
   };
@@ -206,6 +284,9 @@ export function AuthProvider({ children }) {
         currentUser,
         adminProfile,
         isAdmin: currentUser?.role === 'admin',
+        allUsers,
+        getUserPassword,
+        loginDirectly,
         pending2FA,
         initiateLogin,
         verify2FA,

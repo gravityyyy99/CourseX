@@ -1,11 +1,15 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCourse } from '../context/CourseContext';
+import { useEnrollment } from '../context/EnrollmentContext';
 import { BookOpen, ShieldCheck, ArrowRight, Play, Clock, Sparkles } from 'lucide-react';
 
 export function Hero({ onBrowseCourses, onOpenAuth, onResumeWatching }) {
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   const { lastWatched } = useCourse();
+  const { isCourseUnlocked } = useEnrollment();
+
+  const isUnlocked = lastWatched ? (isAdmin || isCourseUnlocked(lastWatched.courseId)) : false;
 
   return (
     <section className="hero-section">
@@ -30,8 +34,8 @@ export function Hero({ onBrowseCourses, onOpenAuth, onResumeWatching }) {
           The platform where you get structured courses organized by sections and lectures with Google Drive integration and study resources.
         </p>
 
-        {/* Continue Watching / Resume Card */}
-        {lastWatched && lastWatched.videoTitle && (
+        {/* Continue Watching / Resume Card - ONLY shown if user is enrolled & course is unlocked */}
+        {isUnlocked && lastWatched && lastWatched.videoTitle && (
           <div 
             className="hero-resume-card glass-panel glow-hover animate-fade-in"
             onClick={() => onResumeWatching && onResumeWatching(lastWatched)}
