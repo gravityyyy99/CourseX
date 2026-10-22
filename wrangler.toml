@@ -6,3 +6,7 @@ compatibility_date = "2024-09-23"
 directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
+
+[[kv_namespaces]]
+binding = "COURSEX_KV"
+id = "fd20190bc97e4c4a93030aa9f11bc2a4"

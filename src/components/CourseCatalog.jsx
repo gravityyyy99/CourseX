@@ -13,14 +13,17 @@ import {
   Lock,
   Sparkles,
   CheckCircle2,
-  KeyRound
+  KeyRound,
+  Trash2,
+  X
 } from 'lucide-react';
 
 export function CourseCatalog({ onSelectCourse, onNavigateAdmin, onOpenAuth }) {
-  const { courses, setActiveCourseId } = useCourse();
+  const { courses, setActiveCourseId, deleteCourse } = useCourse();
   const { currentUser, isAdmin } = useAuth();
   const { isCourseUnlocked } = useEnrollment();
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDeleteCourseId, setConfirmDeleteCourseId] = useState(null);
   
   // If user signed in via Unique ID, default to showing their enrolled courses
   const [courseFilter, setCourseFilter] = useState(() => {
@@ -152,16 +155,87 @@ export function CourseCatalog({ onSelectCourse, onNavigateAdmin, onOpenAuth }) {
 
                   <div className="card-actions-group">
                     {isAdmin && (
-                      <button 
-                        className="btn-admin-quick-edit"
-                        title="Manage in Admin Panel"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigateAdmin(course.id);
-                        }}
-                      >
-                        <Settings size={14} />
-                      </button>
+                      <>
+                        <button 
+                          type="button"
+                          className="btn-admin-quick-edit"
+                          title="Manage in Admin Panel"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigateAdmin(course.id);
+                          }}
+                        >
+                          <Settings size={14} />
+                        </button>
+                        {confirmDeleteCourseId === course.id ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+                            <button 
+                              type="button"
+                              style={{
+                                background: '#ef4444',
+                                border: 'none',
+                                color: '#fff',
+                                padding: '6px 9px',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteCourse(course.id);
+                                setConfirmDeleteCourseId(null);
+                              }}
+                              title="Confirm Delete"
+                            >
+                              Confirm
+                            </button>
+                            <button 
+                              type="button"
+                              style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: '#cbd5e1',
+                                padding: '6px 7px',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDeleteCourseId(null);
+                              }}
+                              title="Cancel"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            type="button"
+                            className="btn-admin-quick-delete"
+                            title="Delete Course"
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              color: '#f87171',
+                              padding: '7px 9px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDeleteCourseId(course.id);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </>
                     )}
                     <button className="btn-open-course">
                       <span>{isUnlocked ? 'Continue Learning' : 'Preview & Enroll'}</span>

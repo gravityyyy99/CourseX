@@ -82,37 +82,85 @@ export default {
     // 0. GET/POST /api/courses
     if (url.pathname === '/api/courses') {
       if (request.method === 'GET') {
-        return new Response(JSON.stringify(INITIAL_COURSES), {
+        let stored = null;
+        if (env?.COURSEX_KV) {
+          try {
+            stored = await env.COURSEX_KV.get('courses');
+          } catch {}
+        }
+        return new Response(stored || JSON.stringify(INITIAL_COURSES), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       }
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
+      if (request.method === 'POST') {
+        try {
+          const body = await request.text();
+          if (env?.COURSEX_KV && body) {
+            await env.COURSEX_KV.put('courses', body);
+          }
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        } catch (err) {
+          return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        }
+      }
     }
 
     // 0.1 GET/POST /api/customers
     if (url.pathname === '/api/customers') {
       if (request.method === 'GET') {
-        return new Response(JSON.stringify(INITIAL_CUSTOMERS), {
+        let stored = null;
+        if (env?.COURSEX_KV) {
+          try {
+            stored = await env.COURSEX_KV.get('customers');
+          } catch {}
+        }
+        return new Response(stored || JSON.stringify(INITIAL_CUSTOMERS), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       }
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
+      if (request.method === 'POST') {
+        try {
+          const body = await request.text();
+          if (env?.COURSEX_KV && body) {
+            await env.COURSEX_KV.put('customers', body);
+          }
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        } catch (err) {
+          return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        }
+      }
     }
 
     // 0.2 GET/POST /api/users
     if (url.pathname === '/api/users') {
       if (request.method === 'GET') {
-        return new Response(JSON.stringify(INITIAL_USERS), {
+        let stored = null;
+        if (env?.COURSEX_KV) {
+          try {
+            stored = await env.COURSEX_KV.get('users');
+          } catch {}
+        }
+        return new Response(stored || JSON.stringify(INITIAL_USERS), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       }
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
+      if (request.method === 'POST') {
+        try {
+          const body = await request.text();
+          if (env?.COURSEX_KV && body) {
+            await env.COURSEX_KV.put('users', body);
+          }
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        } catch (err) {
+          return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        }
+      }
     }
 
     // 1. GET /api/resolve-terabox?url=...

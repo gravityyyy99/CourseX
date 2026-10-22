@@ -30,46 +30,27 @@ export function CourseProvider({ children }) {
     }
   });
 
-  // 1. Continuous server synchronization across all browsers and devices
-  const syncCoursesFromServer = async () => {
-    try {
-      const res = await fetch('/api/courses');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setCourses(prevCourses => {
-            if (JSON.stringify(prevCourses) !== JSON.stringify(data)) {
+  // 1. Initial server synchronization on mount (loads from server if cache is empty)
+  useEffect(() => {
+    const initCourses = async () => {
+      try {
+        const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (!cached) {
+          const res = await fetch('/api/courses');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              setCourses(data);
               try {
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
               } catch {}
-              return data;
             }
-            return prevCourses;
-          });
+          }
         }
-      }
-    } catch {}
-  };
-
-  useEffect(() => {
-    syncCoursesFromServer();
-
-    const handleFocus = () => syncCoursesFromServer();
-    const handleVisibility = () => {
-      if (!document.hidden) syncCoursesFromServer();
+      } catch {}
     };
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    // Poll every 4 seconds to sync without thrashing
-    const interval = setInterval(syncCoursesFromServer, 4000);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      clearInterval(interval);
-    };
+    initCourses();
   }, []);
 
   // 2. Persist courses to server and localStorage whenever modified
@@ -194,23 +175,30 @@ export function CourseProvider({ children }) {
   const deleteCourse = (courseId) => {
     const updated = courses.filter(c => c.id !== courseId);
     persistCourses(updated);
-    if (activeCourseId === courseId && updated.length > 0) {
-      setActiveCourseId(updated[0].id);
-      setActiveSectionId(updated[0]?.sections?.[0]?.id || "");
-      setActiveVideoId(updated[0]?.sections?.[0]?.videos?.[0]?.id || "");
+    if (activeCourseId === courseId) {
+      if (updated.length > 0) {
+        setActiveCourseId(updated[0].id);
+        setActiveSectionId(updated[0]?.sections?.[0]?.id || "");
+        setActiveVideoId(updated[0]?.sections?.[0]?.videos?.[0]?.id || "");
+      } else {
+        setActiveCourseId("");
+        setActiveSectionId("");
+        setActiveVideoId("");
+      }
     }
   };
 
   const addSection = (courseId, sectionTitle) => {
     const updated = courses.map(c => {
       if (c.id !== courseId) return c;
+      const existingSections = Array.isArray(c.sections) ? c.sections : [];
       const newSec = {
         id: `sec-${Date.now()}`,
-        title: sectionTitle.trim() || `Section ${c.sections.length + 1}`,
+        title: sectionTitle.trim() || `Section ${existingSections.length + 1}`,
         videos: [],
         notes: []
       };
-      return { ...c, sections: [...c.sections, newSec] };
+      return { ...c, sections: [...existingSections, newSec] };
     });
     persistCourses(updated);
   };
@@ -218,9 +206,10 @@ export function CourseProvider({ children }) {
   const renameSection = (courseId, sectionId, newTitle) => {
     const updated = courses.map(c => {
       if (c.id !== courseId) return c;
+      const existingSections = Array.isArray(c.sections) ? c.sections : [];
       return {
         ...c,
-        sections: c.sections.map(s => (s.id === sectionId ? { ...s, title: newTitle.trim() } : s))
+        sections: existingSections.map(s => (s.id === sectionId ? { ...s, title: newTitle.trim() } : s))
       };
     });
     persistCourses(updated);
@@ -229,9 +218,10 @@ export function CourseProvider({ children }) {
   const deleteSection = (courseId, sectionId) => {
     const updated = courses.map(c => {
       if (c.id !== courseId) return c;
+      const existingSections = Array.isArray(c.sections) ? c.sections : [];
       return {
         ...c,
-        sections: c.sections.filter(s => s.id !== sectionId)
+        sections: existingSections.filter(s => s.id !== sectionId)
       };
     });
     persistCourses(updated);

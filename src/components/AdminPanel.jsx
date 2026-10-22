@@ -126,6 +126,10 @@ export function AdminPanel({ onNavigateToCourse }) {
   // Add Section State
   const [showAddSection, setShowAddSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [confirmDeleteCourse, setConfirmDeleteCourse] = useState(false);
+  const [confirmDeleteSectionId, setConfirmDeleteSectionId] = useState(null);
+  const [confirmRejectReqId, setConfirmRejectReqId] = useState(null);
+  const [confirmRevokeCustId, setConfirmRevokeCustId] = useState(null);
 
   // Rename Section State
   const [renamingSectionId, setRenamingSectionId] = useState(null);
@@ -578,17 +582,42 @@ export function AdminPanel({ onNavigateToCourse }) {
                     <Play size={13} /> View Course
                   </button>
 
-                  <button 
-                    className="btn-danger-sm"
-                    onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete "${activeCourse.title}"?`)) {
-                        deleteCourse(activeCourse.id);
-                      }
-                    }}
-                    title="Delete course"
-                  >
-                    <Trash2 size={13} /> Delete
-                  </button>
+                  {confirmDeleteCourse ? (
+                    <div className="confirm-delete-inline-course" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <button 
+                        type="button"
+                        className="btn-danger-sm"
+                        style={{ background: '#ef4444', color: '#fff', fontWeight: 600 }}
+                        onClick={() => {
+                          const targetId = activeCourse.id;
+                          deleteCourse(targetId);
+                          const remaining = courses.filter(c => c.id !== targetId);
+                          setSelectedCourseId(remaining[0]?.id || '');
+                          setConfirmDeleteCourse(false);
+                        }}
+                        title="Confirm Delete Course"
+                      >
+                        <Trash2 size={13} /> Confirm Delete
+                      </button>
+                      <button 
+                        type="button"
+                        className="btn-secondary-sm"
+                        onClick={() => setConfirmDeleteCourse(false)}
+                        title="Cancel"
+                      >
+                        <X size={13} /> Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      type="button"
+                      className="btn-danger-sm"
+                      onClick={() => setConfirmDeleteCourse(true)}
+                      title="Delete course"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -737,17 +766,40 @@ export function AdminPanel({ onNavigateToCourse }) {
                         <span>Add Notes</span>
                       </button>
 
-                      <button 
-                        className="btn-delete-section"
-                        onClick={() => {
-                          if (window.confirm(`Delete "${section.title}" and its videos/notes?`)) {
-                            deleteSection(activeCourse.id, section.id);
-                          }
-                        }}
-                        title="Delete Section"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {confirmDeleteSectionId === section.id ? (
+                        <div className="confirm-delete-inline-section" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <button 
+                            type="button"
+                            className="btn-danger-sm"
+                            style={{ background: '#ef4444', color: '#fff', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 600 }}
+                            onClick={() => {
+                              deleteSection(activeCourse.id, section.id);
+                              setConfirmDeleteSectionId(null);
+                            }}
+                            title="Confirm Delete Section"
+                          >
+                            <Trash2 size={12} /> Confirm
+                          </button>
+                          <button 
+                            type="button"
+                            className="btn-secondary-sm"
+                            style={{ padding: '4px 6px', fontSize: '0.75rem' }}
+                            onClick={() => setConfirmDeleteSectionId(null)}
+                            title="Cancel"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          type="button"
+                          className="btn-delete-section"
+                          onClick={() => setConfirmDeleteSectionId(section.id)}
+                          title="Delete Section"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
